@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30404.54
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadLinesBenchmarks", "ReadLinesBenchmarks\ReadLinesBenchmarks.csproj", "{0F9C56AF-9A11-485E-8B86-089D9347DE34}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0F9C56AF-9A11-485E-8B86-089D9347DE34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F9C56AF-9A11-485E-8B86-089D9347DE34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F9C56AF-9A11-485E-8B86-089D9347DE34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F9C56AF-9A11-485E-8B86-089D9347DE34}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A893994E-E1F2-435E-BCCB-5C4DA445316E}
+	EndGlobalSection
+EndGlobal
