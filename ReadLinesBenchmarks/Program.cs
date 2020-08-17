@@ -20,21 +20,22 @@ namespace ReadLinesBenchmarks
 
         private Stream _stream;
 
-        [Params(300_000)]
+        [Params(20/*, 300_000*/)]
         public int LineNumber { get; set; }
 
         [ParamsSource(nameof(LineCharMultiplierValues))]
         public int LineCharMultiplier { get; set; }
-        public IEnumerable<int> LineCharMultiplierValues => Enumerable.Range(1, 15).Concat(new[] { 20, 30, 50, 80, 100 });
+        public IEnumerable<int> LineCharMultiplierValues => new[] { 1, 2, 8, 1000 };
+        //public IEnumerable<int> LineCharMultiplierValues => Enumerable.Range(1, 15).Concat(new[] { 20, 30, 50, 80, 100 });
 
-        [IterationSetup]
-        public void IterationSetup()
+        [GlobalSetup]
+        public void GlobalSetup()
         {
             _stream = PrepareStream();
         }
 
-        [IterationCleanup]
-        public void IterationCleanup()
+        [GlobalCleanup]
+        public void GlobalCleanup()
         {
             _stream.Dispose();
         }
@@ -54,15 +55,15 @@ namespace ReadLinesBenchmarks
             }
             sw.Flush();
 
-            stream.Seek(0, SeekOrigin.Begin);
-
             return stream;
         }
 
         [Benchmark(Baseline = true)]
         public async Task<string> ReadLineUsingStringReaderAsync()
         {
-            using var sr = new StreamReader(_stream, Encoding.UTF8);
+            _stream.Seek(0, SeekOrigin.Begin);
+
+            var sr = new StreamReader(_stream, Encoding.UTF8);
             string str;
             while ((str = await sr.ReadLineAsync()) is not null)
             {
@@ -76,7 +77,9 @@ namespace ReadLinesBenchmarks
         [Benchmark]
         public async Task<string> ReadLineUsingPipelineAsync()
         {
-            var reader = PipeReader.Create(_stream);
+            _stream.Seek(0, SeekOrigin.Begin);
+
+            var reader = PipeReader.Create(_stream, new StreamPipeReaderOptions(leaveOpen: true));
             string str;
             while (true)
             {
@@ -110,6 +113,78 @@ namespace ReadLinesBenchmarks
             }
 
             return default;
+        }
+
+        [Benchmark]
+        public async Task<string> ReadLineUsingPipelineVer2Async()
+        {
+            _stream.Seek(0, SeekOrigin.Begin);
+
+            var reader = PipeReader.Create(_stream, new StreamPipeReaderOptions(leaveOpen: true));
+            string str;
+
+            while (true)
+            {
+                ReadResult result = await reader.ReadAsync();
+                ReadOnlySequence<byte> buffer = result.Buffer;
+
+                str = ProcessLine(ref buffer);
+
+                reader.AdvanceTo(buffer.Start, buffer.End);
+
+                if (result.IsCompleted) break;
+            }
+
+            await reader.CompleteAsync();
+            return str;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string ProcessLine(ref ReadOnlySequence<byte> buffer)
+        {
+            string str = null;
+
+            if (buffer.IsSingleSegment)
+            {
+                var span = buffer.FirstSpan;
+                int consumed;
+                while (span.Length > 0)
+                {
+                    var newLine = span.IndexOf(NewLine);
+
+                    if (newLine == -1) break;
+
+                    var line = span.Slice(0, newLine);
+                    str = Encoding.UTF8.GetString(line);
+
+                    // simulate string processing
+                    str = str.AsSpan().Slice(0, 5).ToString();
+
+                    consumed = line.Length + NewLine.Length;
+                    span = span.Slice(consumed);
+                    buffer = buffer.Slice(consumed);
+                }
+            }
+            else
+            {
+                var sequenceReader = new SequenceReader<byte>(buffer);
+
+                while (!sequenceReader.End)
+                {
+                    while (sequenceReader.TryReadTo(out var line, NewLine))
+                    {
+                        str = Encoding.UTF8.GetString(line);
+
+                        // simulate string processing
+                        str = str.AsSpan().Slice(0, 5).ToString();
+                    }
+
+                    buffer = buffer.Slice(sequenceReader.Position);
+                    sequenceReader.Advance(buffer.Length);
+                }
+            }
+
+            return str;
         }
     }
 
