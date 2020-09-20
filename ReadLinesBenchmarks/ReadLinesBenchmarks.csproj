@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
-    <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
+    <PackageReference Include="System.IO.Pipelines" Version="5.0.0-rc.1.20451.14" />
   </ItemGroup>
 
 </Project>
